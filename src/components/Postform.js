@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { createPost } from '../actions/postActions';
+import { createPost, updatePost } from '../actions/postActions';
+import store from '.././store';
 
 class PostForm extends Component {
   constructor(props) {
@@ -15,6 +16,18 @@ class PostForm extends Component {
     this.onSubmit = this.onSubmit.bind(this);
   }
 
+  componentDidUpdate(prevProp, prevState) {
+    const id = this.props.match.params.id || null;
+    const posts = store.getState() || [];
+    if (id && id !== prevProp.match.params.id) {
+      const post = posts.posts.items.find(p => p.id === +id);
+      this.setState({
+        title: post.title,
+        body: post.body
+      })
+    }   
+  }
+
   onChange(e) {
     this.setState({ [e.target.name]: e.target.value });
   }
@@ -26,8 +39,14 @@ class PostForm extends Component {
       title: this.state.title,
       body: this.state.body
     };
+    
+    if (this.props.match.params.id) {
+      this.props.updatePost(post, this.props.match.params.id)
+    } else {
+      this.props.createPost(post);
+    }
 
-    this.props.createPost(post);
+    this.props.history.push("/");
   }
 
   render() {
@@ -41,6 +60,7 @@ class PostForm extends Component {
             <input
               type="text"
               name="title"
+              autoComplete="off"
               onChange={this.onChange}
               value={this.state.title}
             />
@@ -64,7 +84,8 @@ class PostForm extends Component {
 }
 
 PostForm.propTypes = {
-  createPost: PropTypes.func.isRequired
+  createPost: PropTypes.func.isRequired,
+  updatePost: PropTypes.func.isRequired
 };
 
-export default connect(null, { createPost })(PostForm);
+export default connect(null, { createPost, updatePost })(PostForm);
